@@ -1,0 +1,16 @@
+1 - Baixa o zip
+2 - Descompacta o zip
+3 - Baixa o xampp 
+4 - Baixa o MySQL WorkBench - Configura como servidor local (na instalação)
+5 - Baixe o IntelliJ
+
+---------------
+1 - Execute o xampp -> "Start" em MySQL
+2 - Abre o MySQL -> Faz uma conexão -> SQL + (Canto superior esquerdo) -> CREATE DATABASE agenda_consultas;
+3 - Abra o IntelliJ -> "Open" -> Seleciona a pasta descompactada
+     -> Agenda -> src -> main -> java -> Execute o "AgendaConsultasApplication"
+---------------
+Abre o google e digite:
+http://localhost:8080/
+
+Só testar
