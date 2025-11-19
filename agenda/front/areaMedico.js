@@ -1,12 +1,9 @@
-// areaMedico.js completo — copie e cole no seu projeto
+// areaMedico.js completo — com prontuário, cancelar, remover e pesquisa de paciente
 
-// função utilitária para obter idMedico de várias fontes
 function getIdMedico() {
-  // 1) diretamento do localStorage (chave usada antes)
   let id = localStorage.getItem("idMedico");
   if (id && id !== "null" && id !== "undefined") return id;
 
-  // 2) pode estar dentro do usuarioLogado salvo no login
   try {
     const usuarioStr = localStorage.getItem("usuarioLogado");
     if (usuarioStr) {
@@ -39,7 +36,6 @@ async function carregarConsultas() {
     console.log("Buscando consultas para medico:", idMedico);
     const resp = await fetch(`http://localhost:8080/consultas/medico/${idMedico}`);
     if (!resp.ok) {
-      // tenta extrair mensagem do backend
       let errText = `Erro ao buscar consultas (status ${resp.status})`;
       try {
         const j = await resp.json();
@@ -59,12 +55,11 @@ async function carregarConsultas() {
     tbody.innerHTML = "";
 
     if (!Array.isArray(consultas) || consultas.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="5">Nenhuma consulta encontrada.</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="6">Nenhuma consulta encontrada.</td></tr>`;
       return;
     }
 
     consultas.forEach(c => {
-      // evita quebra por campos nulos — padroniza os campos
       const nomePaciente = c?.paciente?.nome || "Sem nome";
       const dataConsulta = c?.dataConsulta || "-";
       const horaConsulta = c?.horaConsulta || "-";
@@ -72,15 +67,26 @@ async function carregarConsultas() {
       const idConsulta = c?.id;
 
       const tr = document.createElement("tr");
+
+      // Determina quais botões mostrar baseado no status
+      let botoes = '';
+
+      if (status === "CONFIRMADA" || status === "PENDENTE") {
+        botoes += `<button class="btn btn-primary btn-small" onclick="abrirProntuario(${idConsulta})">Prontuário</button>`;
+        botoes += ` <button class="btn btn-danger btn-small" onclick="cancelarConsulta(${idConsulta})">Cancelar</button>`;
+      }
+
+      if (status === "ATENDIDA" || status === "CANCELADA") {
+        botoes += `<button class="btn btn-danger btn-small" onclick="removerConsulta(${idConsulta})">Remover</button>`;
+      }
+
       tr.innerHTML = `
         <td>${nomePaciente}</td>
         <td>${dataConsulta}</td>
         <td>${horaConsulta}</td>
         <td>${status}</td>
         <td>
-          ${["CONFIRMADA", "ATENDIDA"].includes(String(status).toUpperCase())
-            ? `<button class="btn btn-primary btn-small" onclick="abrirProntuario(${idConsulta})">Prontuário</button>`
-            : ""}
+          ${botoes}
         </td>
       `;
       tbody.appendChild(tr);
@@ -88,12 +94,12 @@ async function carregarConsultas() {
 
   } catch (erro) {
     console.error("Erro ao carregar consultas:", erro);
-    // mostra mensagem leve ao usuário, sem bloquear
     const tbody = document.querySelector("#tabelaConsultas tbody");
-    if (tbody) tbody.innerHTML = `<tr><td colspan="5">Erro ao carregar consultas. Veja console.</td></tr>`;
+    if (tbody) tbody.innerHTML = `<tr><td colspan="6">Erro ao carregar consultas. Veja console.</td></tr>`;
   }
 }
 
+// ===================== PRONTUÁRIO ===================== //
 function abrirProntuario(idConsulta) {
   const modal = document.getElementById("prontuarioBackdrop");
   if (!modal) {
@@ -103,9 +109,13 @@ function abrirProntuario(idConsulta) {
   modal.style.display = "flex";
   document.getElementById("prontuarioModal").setAttribute("data-id-consulta", idConsulta);
 
-  // opcional: buscar dados da consulta para preencher o modal (se existir endpoint GET /consultas/{id})
-  // como seu backend não tinha explicito, comentei — se existir, podemos descomentar e usar:
-  // fetch(`http://localhost:8080/consultas/${idConsulta}`).then(... preencher campos ...)
+  // Limpa os campos ao abrir
+  document.getElementById("sintomas").value = "";
+  document.getElementById("duracao").value = "";
+  document.getElementById("historico").value = "";
+  document.getElementById("diagnostico").value = "";
+  document.getElementById("prescricao").value = "";
+  document.getElementById("observacoes").value = "";
 }
 
 async function salvarProntuario() {
@@ -118,7 +128,7 @@ async function salvarProntuario() {
   const prontuario = {
     sintomas: document.getElementById("sintomas").value,
     duracaoSintomas: document.getElementById("duracao").value,
-    historicoMedico: document.getElementById("historico").value,
+    historico: document.getElementById("historico").value,
     diagnostico: document.getElementById("diagnostico").value,
     prescricao: document.getElementById("prescricao").value,
     observacoes: document.getElementById("observacoes").value
@@ -140,9 +150,73 @@ async function salvarProntuario() {
   }
 }
 
+function marcarAtendidaModal() {
+  const idConsulta = document.getElementById("prontuarioModal").getAttribute("data-id-consulta");
+  if (!idConsulta) {
+    alert("Nenhuma consulta selecionada.");
+    return;
+  }
+
+  if (confirm("Deseja marcar esta consulta como atendida?")) {
+    marcarAtendida(idConsulta);
+  }
+}
+
+async function marcarAtendida(idConsulta) {
+  try {
+    const resp = await fetch(`http://localhost:8080/consultas/atender/${idConsulta}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" }
+    });
+    if (!resp.ok) throw new Error("Erro ao marcar como atendida");
+    alert("Consulta marcada como atendida com sucesso!");
+    document.getElementById("prontuarioBackdrop").style.display = "none";
+    carregarConsultas();
+  } catch (erro) {
+    console.error("Erro:", erro);
+    alert("Erro ao marcar como atendida.");
+  }
+}
+
 function fecharProntuario() {
   const modal = document.getElementById("prontuarioBackdrop");
   if (modal) modal.style.display = "none";
+}
+
+// ===================== CANCELAR CONSULTA ===================== //
+async function cancelarConsulta(idConsulta) {
+  if (!confirm("Deseja realmente cancelar esta consulta?")) return;
+
+  try {
+    const resp = await fetch(`http://localhost:8080/consultas/cancelar/${idConsulta}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" }
+    });
+    if (!resp.ok) throw new Error("Erro ao cancelar consulta");
+    alert("Consulta cancelada com sucesso!");
+    carregarConsultas();
+  } catch (erro) {
+    console.error("Erro ao cancelar consulta:", erro);
+    alert("Erro ao cancelar consulta.");
+  }
+}
+
+// ===================== REMOVER CONSULTA ===================== //
+async function removerConsulta(idConsulta) {
+  if (!confirm("Deseja realmente remover esta consulta?")) return;
+
+  try {
+    const resp = await fetch(`http://localhost:8080/consultas/${idConsulta}`, {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" }
+    });
+    if (!resp.ok) throw new Error("Erro ao remover consulta");
+    alert("Consulta removida com sucesso!");
+    carregarConsultas();
+  } catch (erro) {
+    console.error("Erro ao remover consulta:", erro);
+    alert("Erro ao remover consulta.");
+  }
 }
 
 // ===================== DISPONIBILIDADES ===================== //
@@ -242,21 +316,160 @@ async function excluirDisponibilidade(id) {
   }
 }
 
+// ===================== PESQUISA DE PACIENTE ===================== //
+async function pesquisarPaciente() {
+  const nomePaciente = document.getElementById("pesquisaPaciente").value.trim();
+
+  if (!nomePaciente) {
+    alert("Digite o nome do paciente para pesquisar.");
+    return;
+  }
+
+  try {
+    // Busca todos os pacientes e filtra pelo nome
+    const respPacientes = await fetch("http://localhost:8080/pacientes");
+    if (!respPacientes.ok) throw new Error("Erro ao buscar pacientes");
+
+    const pacientes = await respPacientes.json();
+    const pacienteFiltrado = pacientes.find(p =>
+      p.nome.toLowerCase().includes(nomePaciente.toLowerCase())
+    );
+
+    if (!pacienteFiltrado) {
+      alert("Paciente não encontrado.");
+      return;
+    }
+
+    // Busca as consultas do paciente
+    const respConsultas = await fetch(
+      `http://localhost:8080/consultas/paciente/${pacienteFiltrado.idPaciente}`
+    );
+    if (!respConsultas.ok) throw new Error("Erro ao buscar consultas");
+
+    const consultas = await respConsultas.json();
+
+    // Abre o modal de pesquisa
+    abrirModalPesquisa(pacienteFiltrado, consultas);
+  } catch (erro) {
+    console.error("Erro ao pesquisar paciente:", erro);
+    alert("Erro ao pesquisar paciente.");
+  }
+}
+
+function abrirModalPesquisa(paciente, consultas) {
+  const modal = document.getElementById("modalPesquisaBackdrop");
+  if (!modal) {
+    console.error("Modal de pesquisa não encontrado.");
+    return;
+  }
+
+  // Preenche informações do paciente
+  document.getElementById("infoPacienteName").textContent = paciente.nome;
+  document.getElementById("infoPacienteCPF").textContent = paciente.cpf || "-";
+  document.getElementById("infoPacienteTelefone").textContent = paciente.telefone || "-";
+  document.getElementById("infoPacienteEmail").textContent = paciente.email || "-";
+
+  // Preenche tabela de consultas
+  const tbody = document.querySelector("#tabelaPesquisaConsultas tbody");
+  tbody.innerHTML = "";
+
+  if (!Array.isArray(consultas) || consultas.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="6">Nenhuma consulta encontrada para este paciente.</td></tr>`;
+    modal.style.display = "flex";
+    return;
+  }
+
+  consultas.forEach(c => {
+    const tr = document.createElement("tr");
+    const nomeMedico = c?.medico?.nome || "—";
+    const dataConsulta = c?.dataConsulta || "—";
+    const horaConsulta = c?.horaConsulta || "—";
+    const status = c?.status || "—";
+    const idConsulta = c?.id;
+
+    tr.innerHTML = `
+      <td>${nomeMedico}</td>
+      <td>${dataConsulta}</td>
+      <td>${horaConsulta}</td>
+      <td>${status}</td>
+      <td>
+        <button class="btn btn-primary btn-small" onclick="verProntuarioPesquisa(${idConsulta})">
+          Ver Prontuário
+        </button>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+
+  modal.style.display = "flex";
+}
+
+async function verProntuarioPesquisa(idConsulta) {
+  try {
+    const resp = await fetch(`http://localhost:8080/prontuarios/consulta/${idConsulta}`);
+
+    let prontuario = null;
+    if (resp.ok) {
+      prontuario = await resp.json();
+    }
+
+    mostrarProntuarioPesquisa(prontuario, idConsulta);
+  } catch (erro) {
+    console.error("Erro ao buscar prontuário:", erro);
+    alert("Erro ao buscar prontuário.");
+  }
+}
+
+function mostrarProntuarioPesquisa(prontuario, idConsulta) {
+  const modal = document.getElementById("modalDetalheProntuarioBackdrop");
+  if (!modal) {
+    console.error("Modal de detalhe de prontuário não encontrado.");
+    return;
+  }
+
+  if (!prontuario) {
+    document.getElementById("detalheSintomas").textContent = "Nenhum prontuário registrado";
+    document.getElementById("detalheDuracao").textContent = "-";
+    document.getElementById("detalheHistorico").textContent = "-";
+    document.getElementById("detalheDiagnostico").textContent = "-";
+    document.getElementById("detalhePrescricao").textContent = "-";
+    document.getElementById("detalheObservacoes").textContent = "-";
+  } else {
+    document.getElementById("detalheSintomas").textContent = prontuario.sintomas || "-";
+    document.getElementById("detalheDuracao").textContent = prontuario.duracaoSintomas || "-";
+    document.getElementById("detalheHistorico").textContent = prontuario.historico || "-";
+    document.getElementById("detalheDiagnostico").textContent = prontuario.diagnostico || "-";
+    document.getElementById("detalhePrescricao").textContent = prontuario.prescricao || "-";
+    document.getElementById("detalheObservacoes").textContent = prontuario.observacoes || "-";
+  }
+
+  modal.style.display = "flex";
+}
+
+function fecharModalPesquisa() {
+  const modal = document.getElementById("modalPesquisaBackdrop");
+  if (modal) modal.style.display = "none";
+}
+
+function fecharModalDetalheProntuario() {
+  const modal = document.getElementById("modalDetalheProntuarioBackdrop");
+  if (modal) modal.style.display = "none";
+}
+
 // ===================== INIT & POLLING ===================== //
 let pollingHandle = null;
 window.onload = () => {
-  // coloca nome do médico (se existir)
   const nomeMedico = localStorage.getItem("nomeMedico") || (() => {
     try {
       const usuario = JSON.parse(localStorage.getItem("usuarioLogado") || "{}");
       return usuario?.nome || usuario?.medico?.nome || "";
     } catch (e) { return ""; }
   })();
+
   if (nomeMedico && document.getElementById("medicoNome")) {
-    document.getElementById("medicoNome").textContent = nomeMedico;
+    document.getElementById("medicoNome").textContent = `Olá, ${nomeMedico}`;
   }
 
-  // carrega uma vez e inicia polling a cada 10s
   carregarConsultas();
   carregarDisponibilidades();
 
@@ -264,41 +477,13 @@ window.onload = () => {
   pollingHandle = setInterval(() => {
     carregarConsultas();
     carregarDisponibilidades();
-  }, 10000); // 10000ms = 10s
+  }, 10000);
 };
 
 window.onclick = function (event) {
-  const modals = ["prontuarioBackdrop", "modalDisponibilidadeBackdrop"];
+  const modals = ["prontuarioBackdrop", "modalDisponibilidadeBackdrop", "modalPesquisaBackdrop", "modalDetalheProntuarioBackdrop"];
   modals.forEach(id => {
     const modal = document.getElementById(id);
     if (event.target === modal) modal.style.display = "none";
   });
-
-  function marcarAtendidaModal(consultaId) {
-      // Abre o modal de confirmação (se existir)
-      const modal = document.getElementById("modalMarcarAtendida");
-      if (modal) {
-          modal.style.display = "flex";
-      }
-
-      // Guarda o ID para usar ao confirmar
-      window.consultaAtenderId = consultaId;
-  }
-
-  function marcarAtendida() {
-      const id = window.consultaAtenderId;
-
-      fetch(`/medico/consulta/${id}/marcar-atendida`, {
-          method: "PUT"
-      })
-      .then(response => {
-          if (response.ok) {
-              alert("Consulta marcada como atendida!");
-              location.reload();
-          } else {
-              alert("Erro ao marcar como atendida.");
-          }
-      });
-  }
-
 };
