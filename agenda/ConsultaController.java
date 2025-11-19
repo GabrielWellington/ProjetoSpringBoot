@@ -9,6 +9,8 @@ import com.trabalho.agenda.repository.DisponibilidadeRepository;
 import com.trabalho.agenda.repository.MedicoRepository;
 import com.trabalho.agenda.repository.PacienteRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
@@ -232,5 +234,23 @@ public class ConsultaController {
         }
 
         return horariosPorDia;
+    }
+    // Adicione este método ao ConsultaController.java
+
+    // 🔹 Deletar consulta (apenas se atendida ou cancelada)
+    @DeleteMapping("/{idConsulta}")
+    public ResponseEntity<String> deletarConsulta(@PathVariable Long idConsulta) {
+        Consulta consulta = consultaRepository.findById(idConsulta)
+                .orElseThrow(() -> new RuntimeException("Consulta não encontrada"));
+
+        // Permite deletar apenas consultas atendidas ou canceladas
+        if (!consulta.getStatus().equalsIgnoreCase("ATENDIDA") &&
+                !consulta.getStatus().equalsIgnoreCase("CANCELADA")) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body("Apenas consultas atendidas ou canceladas podem ser removidas.");
+        }
+
+        consultaRepository.deleteById(idConsulta);
+        return ResponseEntity.ok("Consulta removida com sucesso!");
     }
 }
