@@ -4,6 +4,8 @@
 4 - Baixa o MySQL WorkBench - Configura como servidor local (na instalação)
 5 - Baixe o IntelliJ
 
+MySQL -> https://cdn.mysql.com//Downloads/MySQLGUITools/mysql-workbench-community-8.0.44-winx64.msi
+Xampp -> https://sinalbr.dl.sourceforge.net/project/xampp/XAMPP%20Windows/8.2.12/xampp-windows-x64-8.2.12-0-VS16-installer.exe?viasf=1
 ---------------
 1 - Execute o xampp -> "Start" em MySQL
 2 - Abre o MySQL -> Faz uma conexão -> "SQL+" (Canto superior esquerdo) -> CREATE DATABASE agenda_consultas;
