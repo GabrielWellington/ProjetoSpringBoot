@@ -1,0 +1,24 @@
+/* login.css — moderno, clean, medical landing */
+
+:root{
+  --bg-grad: linear-gradient(135deg, #f4f8ff, #ffffff);
+  --panel:#fff;
+  --primary:#1f6fe3;
+  --muted:#6b7280;
+  --radius:14px;
+  --mono:"Inter","Segoe UI",Arial,sans-serif;
+}
+
+.daltonic-mode{
+  --primary:#0057b8;
+}
+
+html,body{height:100%;margin:0;font-family:var(--mono);background:var(--bg-grad);display:flex;align-items:center;justify-content:center;}
+.login-container{width:340px;background:var(--panel);padding:36px;border-radius:var(--radius);box-shadow:0 20px 60px rgba(12,30,60,0.08);text-align:center;}
+h2{margin:0 0 18px 0;color:var(--primary);font-size:20px;}
+label{display:block;text-align:left;font-weight:700;color:var(--muted);margin-top:8px;}
+input{width:100%;padding:12px;margin-top:6px;border-radius:10px;border:1px solid rgba(12,30,60,0.04);outline:none;}
+input:focus{box-shadow:0 8px 28px rgba(31,111,227,0.06);border-color:var(--primary);}
+button{width:100%;padding:12px;margin-top:16px;border-radius:10px;border:0;background:var(--primary);color:#fff;font-weight:800;cursor:pointer;}
+button:hover{transform:translateY(-1px);}
+#mensagemErro{color:#d9534f;margin-top:10px;}

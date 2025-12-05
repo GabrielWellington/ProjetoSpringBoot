@@ -1,0 +1,111 @@
+/* areaMedico.css — redesign médico profissional (tema claro + daltonic) */
+
+/* Design System (cores, espaçamentos, tipografia) */
+:root{
+  --bg: #f6f9fc;
+  --surface: #ffffff;
+  --card: #ffffff;
+  --text: #0f1724;
+  --muted: #6b7280;
+  --clinic-blue: #1f6fe3; /* primary */
+  --clinic-blue-600: #145eb8;
+  --health-green: #16a34a;
+  --danger: #e04848;
+  --glass: rgba(31,23,36,0.03);
+  --shadow: 0 10px 30px rgba(18,40,80,0.06);
+  --radius: 14px;
+  --radius-sm: 8px;
+  --gap: 18px;
+  --card-padding: 18px;
+  --fw-strong: 600;
+  --mono: "Inter", "Segoe UI", Arial, sans-serif;
+}
+
+/* Daltonic-mode overrides */
+.daltonic-mode {
+  --clinic-blue: #0057b8;   /* higher contrast but safe */
+  --clinic-blue-600: #003f7a;
+  --health-green: #1a9fb4;  /* green replaced by accessible teal */
+  --danger: #d9534f; /* red shifted */
+  background-image: linear-gradient(0deg, rgba(255,255,255,0.02), rgba(0,0,0,0.01));
+}
+
+/* Base */
+html,body{height:100%;margin:0;font-family:var(--mono);background:var(--bg);color:var(--text);-webkit-font-smoothing:antialiased;}
+.container{max-width:1120px;margin:28px auto;padding:22px;}
+
+/* Header */
+header{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;gap:16px;}
+.brand{display:flex;align-items:center;gap:14px;}
+.logo{width:56px;height:56px;border-radius:12px;background:linear-gradient(135deg,var(--clinic-blue),#3aa0ff);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;box-shadow:var(--shadow);}
+header h1{font-size:20px;margin:0;}
+.meta{color:var(--muted);font-size:13px;}
+
+/* Controls */
+.controls{display:flex;align-items:center;gap:10px;}
+.btn{border:0;padding:9px 12px;border-radius:10px;cursor:pointer;font-weight:700;font-size:14px;}
+.btn-sm{padding:6px 10px;font-size:13px;border-radius:8px;}
+.btn.ghost{background:transparent;border:1px solid rgba(20,20,20,0.06);color:var(--clinic-blue);}
+
+/* Buttons variants */
+.btn-primary{background:var(--clinic-blue);color:#fff;box-shadow:0 6px 18px rgba(31,111,227,0.12);}
+.btn-danger{background:var(--danger);color:#fff;}
+.btn-success{background:var(--health-green);color:#fff;}
+.btn.secondary{background:#f2f7ff;color:var(--clinic-blue);border:1px solid rgba(31,111,227,0.06);}
+
+/* Grid & cards */
+.grid{display:grid;grid-template-columns:1fr;gap:var(--gap);}
+.card{background:var(--card);border-radius:var(--radius);padding:var(--card-padding);box-shadow:var(--shadow);}
+
+/* Tabs */
+.tab-buttons{display:flex;gap:10px;margin-bottom:12px;border-bottom:1px solid rgba(14,22,34,0.04);padding-bottom:10px;}
+.tab-btn{background:none;border:0;padding:10px 14px;cursor:pointer;font-weight:700;color:var(--muted);border-radius:10px;}
+.tab-btn.active{color:var(--clinic-blue);background:linear-gradient(90deg, rgba(31,111,227,0.08), rgba(31,111,227,0.03));box-shadow:inset 0 -2px 0 var(--clinic-blue);}
+
+/* Table styling (premium) */
+table{width:100%;border-collapse:collapse;font-size:14px;background:transparent;}
+thead th{background:linear-gradient(90deg,var(--clinic-blue),var(--clinic-blue-600));color:#fff;text-align:left;padding:12px;border-radius:8px 8px 0 0;}
+tbody td{padding:14px;border-top:1px solid rgba(15,23,42,0.04);vertical-align:middle;}
+tbody tr:hover td{background:linear-gradient(180deg, rgba(31,111,227,0.02), transparent);}
+
+/* Muted text */
+.muted{color:var(--muted);font-size:13px;}
+
+/* Search box */
+.search-box{display:flex;gap:10px;margin-bottom:20px;}
+.search-box input{flex:1;padding:11px;border-radius:10px;border:1px solid rgba(14,22,34,0.06);background:linear-gradient(180deg,#fff,#fbfdff);outline:none;font-size:14px;}
+.search-box button{padding:10px 14px;}
+
+/* Form controls consistent with design */
+label{display:block;font-size:13px;color:var(--muted);margin-top:10px;font-weight:600;}
+input[type="text"],input[type="time"],input[type="number"],textarea,select{
+  width:100%;padding:11px;border-radius:10px;border:1px solid rgba(14,22,34,0.06);background:#fff;box-shadow:inset 0 1px 0 rgba(255,255,255,0.6);
+  font-size:14px;outline:none;transition:box-shadow .18s,transform .08s,border-color .12s;
+}
+input:focus,textarea:focus,select:focus{
+  box-shadow:0 6px 20px rgba(31,111,227,0.08);border-color:var(--clinic-blue-600);
+}
+
+/* Small helpers */
+.btn-small{padding:7px 10px;border-radius:8px;font-size:13px;}
+.modal-backdrop{position:fixed;inset:0;background:rgba(2,6,23,0.45);display:none;align-items:center;justify-content:center;padding:20px;z-index:80;}
+.modal{background:var(--surface);width:100%;max-width:900px;border-radius:14px;padding:18px;box-shadow:0 30px 60px rgba(4,12,30,0.25);overflow:auto;max-height:92vh;}
+.modal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;}
+
+/* Modal form inputs */
+textarea{min-height:110px;resize:vertical;}
+.modal-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:14px;}
+
+/* Status badges */
+.status{display:inline-block;padding:6px 10px;border-radius:999px;font-weight:700;font-size:13px;}
+.status.PENDENTE{background:#fff7e6;color:#a06b00;border:1px solid rgba(0,0,0,0.03);}
+.status.CONFIRMADA{background:linear-gradient(90deg, rgba(22,163,74,0.12), rgba(22,163,74,0.02));color:var(--health-green);}
+.status.ATENDIDA{background:linear-gradient(90deg, rgba(31,111,227,0.08), rgba(31,111,227,0.02));color:var(--clinic-blue);}
+
+/* Responsive */
+@media (max-width:900px){
+  .container{padding:14px;}
+  .logo{width:48px;height:48px;}
+  thead th{font-size:13px;}
+  input,textarea,select{font-size:13px;padding:10px;}
+}
